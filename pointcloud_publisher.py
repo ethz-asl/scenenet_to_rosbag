@@ -130,7 +130,7 @@ def euclidean_ray_length_to_z_coordinate(depth_image, camera_model):
     vs = np.array([(v - center_x) * constant_x for v in range (0, depth_image.shape[1])])
     us = np.array([(u - center_y) * constant_y for u in range (0, depth_image.shape[0])])
 
-    return np.sqrt(np.square(depth_image) / (1 + np.square(vs[np.newaxis, :]) + np.square(us[:, np.newaxis]))).astype(np.uint16)
+    return (np.sqrt(np.square(depth_image / 1000.0) / (1 + np.square(vs[np.newaxis, :]) + np.square(us[:, np.newaxis]))) * 1000.0).astype(np.uint16)
 
 def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
     center_x = camera_model.cx()
@@ -203,7 +203,7 @@ def publish():
 
     publish_object_segments = True
     publish_scene_pcl = False
-    publish_rgbd = False
+    publish_rgbd = True
     publish_instances = True
 
     # Choose the desired trajectory to publish.
