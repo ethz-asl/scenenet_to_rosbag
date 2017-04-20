@@ -90,7 +90,7 @@ def interpolate_poses(start_pose, end_pose, alpha):
     camera_pose += (1.0 - alpha) * position_to_np_array(start_pose.camera)
     lookat_pose = alpha * position_to_np_array(end_pose.lookat)
     lookat_pose += (1.0 - alpha) * position_to_np_array(start_pose.lookat)
-    timestamp = alpha * end_pose.timestamp + (1.0 - alpha) * start_pose.timestamp
+    timestamp = interpolate_timestamps(start_pose.timestamp, end_pose.timestamp, alpha)
     pose = sn.Pose()
     pose.camera.x = camera_pose[0]
     pose.camera.y = camera_pose[1]
@@ -100,6 +100,9 @@ def interpolate_poses(start_pose, end_pose, alpha):
     pose.lookat.z = lookat_pose[2]
     pose.timestamp = timestamp
     return pose
+
+def interpolate_timestamps(start_timestamp, end_timestamp, alpha):
+    return alpha * end_timestamp + (1.0 - alpha) * start_timestamp
 
 def publishTransform(view, timestamp, frame_id):
     ground_truth_pose = interpolate_poses(view.shutter_open, view.shutter_close, 0.5)
@@ -117,12 +120,24 @@ def publishTransform(view, timestamp, frame_id):
 def pack_rgb(red, green, blue):
     return np.bitwise_or(np.bitwise_or(np.left_shift(red.astype(np.uint8), 16), np.left_shift(green.astype(np.uint8), 8)), blue.astype(np.uint8))
 
+def euclidean_ray_length_to_z_coordinate(depth_image, camera_model):
+    center_x = camera_model.cx()
+    center_y = camera_model.cy()
+
+    constant_x = 1 / camera_model.fx()
+    constant_y = 1 / camera_model.fy()
+
+    vs = np.array([(v - center_x) * constant_x for v in range (0, depth_image.shape[1])])
+    us = np.array([(u - center_y) * constant_y for u in range (0, depth_image.shape[0])])
+
+    return np.sqrt(np.square(depth_image) / (1 + np.square(vs[np.newaxis, :]) + np.square(us[:, np.newaxis]))).astype(np.uint16)
+
 def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
     center_x = camera_model.cx()
     center_y = camera_model.cy()
 
-    constant_x = 1 / camera_model.fx();
-    constant_y = 1 / camera_model.fy();
+    constant_x = 1 / camera_model.fx()
+    constant_y = 1 / camera_model.fy()
 
     pointcloud_xzyrgb_fields = [
         PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
@@ -131,10 +146,11 @@ def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
         PointField(name='rgb', offset=12, datatype=PointField.UINT32, count=1)
     ]
 
-    vs = np.array([(v - center_x) * constant_x for v in range (0, rgb_image.shape[1])])
-    us = np.array([(u - center_y) * constant_y for u in range (0, rgb_image.shape[0])])
+    vs = np.array([(v - center_x) * constant_x for v in range (0, depth_image.shape[1])])
+    us = np.array([(u - center_y) * constant_y for u in range (0, depth_image.shape[0])])
 
-    depth_image = np.sqrt(np.square(depth_image / 1000.0) / (1 + np.square(vs[np.newaxis, :]) + np.square(us[:, np.newaxis])))
+    # Convert depth from cm to m.
+    depth_image = depth_image / 1000.0
 
     x = np.multiply(depth_image, vs)
     y = depth_image * us[:, np.newaxis]
@@ -187,7 +203,7 @@ def publish():
 
     publish_object_segments = True
     publish_scene_pcl = False
-    publish_rgbd = True
+    publish_rgbd = False
     publish_instances = True
 
     # Choose the desired trajectory to publish.
@@ -244,7 +260,7 @@ def publish():
     while not rospy.is_shutdown() and view_idx != len(traj.views):
         view = traj.views[view_idx]
 
-        timestamp = rospy.Time(view.shutter_close.timestamp)
+        timestamp = rospy.Time(interpolate_timestamps(view.shutter_open.timestamp, view.shutter_close.timestamp, 0.5))
         publishTransform(view, timestamp, frame_id)
 
         header.stamp = timestamp
@@ -253,6 +269,9 @@ def publish():
         rgb_image = cv2.imread(photo_path_from_view(traj.render_path,view), cv2.IMREAD_COLOR)
         depth_image = cv2.imread(depth_path_from_view(traj.render_path,view), cv2.IMREAD_UNCHANGED)
         instance_image = cv2.imread(instance_path_from_view(traj.render_path,view), cv2.IMREAD_UNCHANGED)
+
+        # Transform depth values from the Euclidean ray length to the z coordinate.
+        depth_image = euclidean_ray_length_to_z_coordinate(depth_image, camera_model)
 
         if (publish_object_segments):
             # Publish all the instance in the current view as pointclouds.
