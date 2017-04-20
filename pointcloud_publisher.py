@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import division
 import rospy
 import scenenet_pb2 as sn
 import os
@@ -22,7 +21,7 @@ data_root_path = 'data/val'
 protobuf_path = 'data/scenenet_rgbd_val.pb'
 
 # These functions produce a file path (on Linux systems) to the image given
-# a view and render path from a trajectory.  As long the data_root_path to the
+# a view and render path from a trajectory. As long the data_root_path to the
 # root of the dataset is given.  I.e. to either val or train
 def photo_path_from_view(render_path,view):
     photo_path = os.path.join(render_path,'photo')
@@ -81,7 +80,6 @@ def world_to_camera_with_pose(view_pose):
 def camera_to_world_with_pose(view_pose):
     return np.linalg.inv(world_to_camera_with_pose(view_pose))
 
-
 def position_to_np_array(position):
     return np.array([position.x, position.y, position.z])
 
@@ -103,7 +101,7 @@ def interpolate_poses(start_pose, end_pose, alpha):
     pose.timestamp = timestamp
     return pose
 
-def publishTranform(view, timestamp, frame_id):
+def publishTransform(view, timestamp, frame_id):
     ground_truth_pose = interpolate_poses(view.shutter_open, view.shutter_close, 0.5)
     scale, shear, angles, transl, persp = tf.transformations.decompose_matrix(camera_to_world_with_pose(ground_truth_pose))
     rotation = tf.transformations.quaternion_from_euler(*angles)
@@ -115,7 +113,7 @@ def publishTranform(view, timestamp, frame_id):
                                  frame_id,
                                  "world")
 
-# Pack the 3 RGB channels into a single UINT32 field
+# Pack the 3 RGB channels into a single UINT32 field.
 def pack_rgb(red, green, blue):
     return np.bitwise_or(np.bitwise_or(np.left_shift(red.astype(np.uint8), 16), np.left_shift(green.astype(np.uint8), 8)), blue.astype(np.uint8))
 
@@ -150,20 +148,56 @@ def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
     pointcloud = pc2.create_cloud(Header(), pointcloud_xzyrgb_fields, pointcloud)
     return pointcloud
 
+def mono_to_rgb(mono_image):
+    # Representable colors in 24 bits.
+    n_total_colors = 2**24
+    # Unique colors wanted.
+    n_unique_colors = 70
+
+    # RGB step between two magnitude values.
+    delta = n_total_colors/n_unique_colors
+
+    # Prepare 3D shape of RGB image.
+    broadcasted_mono_image = np.dstack((mono_image, mono_image, mono_image))
+
+    # Magnitude to packed RGB colors.
+    packed_rgb_image = np.multiply(np.mod(broadcasted_mono_image, n_unique_colors), delta)
+
+    # Shift by 16 and 8 bits through division.
+    red_bit_shift = 1.0 / 2**16
+    green_bit_shift = 1.0 / 2**8
+
+    bit_shifters = np.dstack((np.full(mono_image.shape, red_bit_shift), np.full(mono_image.shape, green_bit_shift), np.full(mono_image.shape, 1)))
+
+    # Packed RGB values shifted by correct amount.
+    shifted_rgb_image = np.multiply(packed_rgb_image, bit_shifters).astype(np.uint8)
+
+    # Apply mask to get final RGB values.
+    rgb_image = np.bitwise_and(shifted_rgb_image, np.array([0x0000ff])).astype(np.uint8)
+    return rgb_image
 
 def publish():
     rospy.init_node('scenenet_node', anonymous=True)
     frame_id = "/scenenet_camera_frame"
-    rate = rospy.Rate(1)
+
+    # Publishing at 1 Hz as SceneNet dataset is at 1 Hz rate.
+    # Higher rates should be achieved by recording rosbags,
+    # as the computation complexity here cannot guarantee more than 1 Hz.
+    publishing_rate = 1
 
     publish_object_segments = True
     publish_scene_pcl = False
-    publish_rgbd = False
+    publish_rgbd = True
+    publish_instances = True
 
-    # Choose the wanted trajectory to publish
+    # Choose the desired trajectory to publish.
+    # Unfortunately, the trajectory indices don't match their render_path, so
+    # trajectory with index 3 could map to the folder 0/123 in your data folder.
+    # One can choose the folder with the desired trajectory and identify the
+    # corresponding trajectory index by checking the "render_path" field.
     published_trajectory = 2
 
-    # RGBD and pointcloud publishers
+    # RGBD and pointcloud publishers.
     if (publish_object_segments):
         publisher_object_segment_pcl = rospy.Publisher('/scenenet_node/object_segment', PointCloud2, queue_size=100)
 
@@ -177,17 +211,21 @@ def publish():
         publisher_rgb_camera_info = rospy.Publisher('/camera/rgb/camera_info', CameraInfo, queue_size=100)
         publisher_depth_camera_info = rospy.Publisher('/camera/depth/camera_info', CameraInfo, queue_size=100)
 
-    # Set camera information and model
+    if (publish_instances):
+        publisher_instance_image = rospy.Publisher('/camera/instances/image_raw', Image, queue_size=100)
+
+    # Set camera information and model.
     camera_info = get_camera_info()
     camera_model = PinholeCameraModel()
     camera_model.fromCameraInfo(camera_info)
 
-    # Set some globals
+    # Initialize some vars.
+    rate = rospy.Rate(publishing_rate)
     header = Header(frame_id = frame_id)
     cvbridge = CvBridge()
     trajectories = sn.Trajectories()
 
-    # Read all trajectories from the protobuf file
+    # Read all trajectories from the protobuf file.
     try:
         with open(protobuf_path,'rb') as f:
             trajectories.ParseFromString(f.read())
@@ -202,31 +240,29 @@ def publish():
     about the rendered frames of a scene.  This includes camera poses,
     frame numbers and timestamps.
     '''
-
     view_idx = 0
     while not rospy.is_shutdown() and view_idx != len(traj.views):
         view = traj.views[view_idx]
 
         timestamp = rospy.Time(view.shutter_close.timestamp)
-        publishTranform(view, timestamp, frame_id)
+        publishTransform(view, timestamp, frame_id)
 
-        print("Timestamp: " + str(timestamp.secs) + "." + str(timestamp.nsecs) + "     Frame: " + str(view_idx) + " / " + str(len(traj.views)))
         header.stamp = timestamp
 
-        # Read RGB, Depth and Instance images for the current view
+        # Read RGB, Depth and Instance images for the current view.
         rgb_image = cv2.imread(photo_path_from_view(traj.render_path,view), cv2.IMREAD_COLOR)
         depth_image = cv2.imread(depth_path_from_view(traj.render_path,view), cv2.IMREAD_UNCHANGED)
         instance_image = cv2.imread(instance_path_from_view(traj.render_path,view), cv2.IMREAD_UNCHANGED)
 
         if (publish_object_segments):
-            # Publish all the instance in the current view as pointclouds
+            # Publish all the instance in the current view as pointclouds.
             instances_in_current_frame = np.unique(instance_image)
 
             for instance in instances_in_current_frame:
                 instance_mask = np.ma.masked_not_equal(instance_image, instance).mask
                 masked_depth_image = np.ma.masked_where(instance_mask, depth_image)
 
-                # Workaround for when 2D mask is only False values and collapses to a single boolean False
+                # Workaround for when 2D mask is only False values and collapses to a single boolean False.
                 if (not instance_mask.any()):
                     instance_mask_3D = np.broadcast_arrays(instance_mask[np.newaxis, np.newaxis, np.newaxis], rgb_image)
                 else:
@@ -239,13 +275,13 @@ def publish():
                 publisher_object_segment_pcl.publish(object_segment_pcl)
 
         if (publish_scene_pcl):
-            # Publish the scene for the current view as pointcloud
+            # Publish the scene for the current view as pointcloud.
             scene_pcl = convert_rgbd_to_pcl(rgb_image, depth_image, camera_model)
             scene_pcl.header = header
             publisher_scene_pcl.publish(scene_pcl)
 
         if (publish_rgbd):
-            # Publish the RGBD data
+            # Publish the RGBD data.
             rgb_msg = cvbridge.cv2_to_imgmsg(rgb_image, "bgr8")
             rgb_msg.header = header
             publisher_rgb_image.publish(rgb_msg)
@@ -258,6 +294,16 @@ def publish():
 
             publisher_rgb_camera_info.publish(camera_info)
             publisher_depth_camera_info.publish(camera_info)
+
+        if (publish_instances):
+            # Publish the instance data.
+            color_instance_image = mono_to_rgb(instance_image)
+            color_instance_msg = cvbridge.cv2_to_imgmsg(color_instance_image, "bgr8")
+            color_instance_msg.header = header
+            publisher_instance_image.publish(color_instance_msg)
+
+        print("Dataset timestamp: " + str(timestamp.secs) + "." + str(timestamp.nsecs)
+              + "     Frame: " + str(view_idx + 1) + " / " + str(len(traj.views)))
 
         view_idx += 1
         rate.sleep()
