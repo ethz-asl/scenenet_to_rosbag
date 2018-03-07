@@ -1,5 +1,5 @@
 # Interfacing SceneNet and ROS
-Tools for publishing the SceneNet datasets via ROS messages.
+Tools for converting the SceneNet datasets to ROS messages in a rosbag.
 
 ## How to use these tools
 1. Clone this and the [pySceneNetRGBD](https://github.com/jmccormac/pySceneNetRGBD) repositories in the `src` folder of your catkin workspace.
