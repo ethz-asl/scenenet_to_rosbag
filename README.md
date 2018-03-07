@@ -20,7 +20,7 @@ Tools for converting the SceneNet datasets to ROS messages in a rosbag.
     cd .. && make
     ```
 
-3. Run the Python script from this repo writing the SceneNet RGBD data for a trajectory to a rosbag as a sequence of RGB and depth images, coloured pointclouds of the scene, ground truth instance segmentation images, and coloured pointcloudes of ground truth instance segments.
+3. Run the Python script writing a SceneNet trajectory data to a rosbag as a sequence of RGB and depth images, coloured pointclouds of the scene, ground truth instance segmentation images, and coloured pointclouds of ground truth instance segments.
 
     ```bash
     cd ../scenenet_ros_tools
