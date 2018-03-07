@@ -2,37 +2,48 @@
 Tools for publishing the SceneNet datasets via ROS messages.
 
 ## How to use these tools
-1. Clone the [pySceneNetRGBD](https://github.com/jmccormac/pySceneNetRGBD) repository in the `src` folder of your catkin workspace.
+1. Clone this and the [pySceneNetRGBD](https://github.com/jmccormac/pySceneNetRGBD) repositories in the `src` folder of your catkin workspace.
 
     ```bash
     cd <catkin_ws>/src
+    git clone git@github.com:ethz-asl/scenenet_ros_tools.git
     git clone git@github.com:jmccormac/pySceneNetRGBD.git
     ```
-2. Place the `CMakeLists.txt` and the `package.xml` files from this repository, along with any script you want to use, in the `pySceneNetRGBD` main folder.
+
+2. Download the SceneNet validation set (15GB) and the validation set protobuf file to the `data` directory of the `pySceneNetRGBD` folder, then run make in the root `pySceneNetRGBD` folder to generate the protobuf description.
 
     ```bash
-    git clone git@github.com:ethz-asl/scenenet_ros_tools.git /tmp/scenenet_ros_tools
-    cp /tmp/scenenet_ros_tools/package.xml /tmp/scenenet_ros_tools/CMakeLists.txt /tmp/scenenet_ros_tools/pointcloud_publisher.py pySceneNetRGBD/
+    cd pySceneNetRGBD/data
+    wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb scenenet_rgbd_val.pb
+    wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz SceneNetRGBD-val.tar.gz
+    tar -xvzf SceneNetRGBD-val.tar.gz
+    cd .. && make
     ```
 
-3. After following the instructions from the [pySceneNetRGBD](https://github.com/jmccormac/pySceneNetRGBD) repository on how to install _protobuf_, download the dataset and generate the _protobuf_ description, you can run the scripts in the `scenenet_ros_tools` package as ROS nodes by running the following command from the `pySceneNetRGBD` folder:
+3. Run the Python script from this repo writing the SceneNet RGBD data for a trajectory to a rosbag as a sequence of RGB and depth images, coloured pointclouds of the scene, ground truth instance segmentation images, and coloured pointcloudes of ground truth instance segments.
 
     ```bash
-    pip3 install protobuf
-    wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb <download_location>/scenenet_rgbd_val.pb
-    wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz <download_location>/SceneNetRGBD-val.tar.gz
-    tar -xvzf <download_location>/SceneNetRGBD-val.tar.gz <download_location>
-    ln -s <download_location>/scenenet_rgbd_val.pb data/scenenet_rgbd_val.pb  # or cp
-    ln -s <download_location>/val data/val  # or cp -R
-    make
+    cd ../scenenet_ros_tools
+    python scenenet_to_rosbag.py -scenenet_path SCENENET_PATH -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
     ```
 
+    For example:
     ```bash
-    $ rosrun scenenet_ros_tools some_script.py
+    python scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD -trajectory 1 -output_bag scenenet_traj_1.bag
     ```
-
-    To run the `pointcloud_publisher.py` script, for example:
-
+    The output bag contains the following topics:
     ```bash
-    rosrun scenenet_ros_tools pointcloud_publisher.py
+    # RGB and depth images
+    /camera/depth/camera_info       : sensor_msgs/CameraInfo
+    /camera/depth/image_raw         : sensor_msgs/Image        
+    /camera/rgb/camera_info         : sensor_msgs/CameraInfo
+    /camera/rgb/image_raw           : sensor_msgs/Image
+    # Ground truth instance segmentation image
+    /camera/instances/image_raw     : sensor_msgs/Image
+    # Cloured pointcloud of ground truth instance segment         
+    /scenenet_node/object_segment   : sensor_msgs/PointCloud2
+    #  Coloured pointcloud of the scene
+    /scenenet_node/scene            : sensor_msgs/PointCloud2
+    # Transform from /scenenet_camera_frame to /world
+    /tf                             : tf/tfMessage
     ```

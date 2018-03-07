@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-
-import rospy
-import scenenet_pb2 as sn
 import os
+import sys
+import argparse
+
+import rosbag
+import rospy
 
 import numpy as np
 
@@ -13,11 +15,9 @@ import tf
 
 from std_msgs.msg import Header
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
-from geometry_msgs.msg import Point32
+from geometry_msgs.msg import Point32, TransformStamped
+from tf.msg import tfMessage
 import sensor_msgs.point_cloud2 as pc2
-
-data_root_path = 'data/val'
-protobuf_path = 'data/scenenet_rgbd_val.pb'
 
 
 # These functions produce a file path (on Linux systems) to the image given
@@ -121,23 +121,37 @@ def interpolate_timestamps(start_timestamp, end_timestamp, alpha):
     return alpha * end_timestamp + (1.0 - alpha) * start_timestamp
 
 
-def publishTransform(view, timestamp, frame_id, tf_broadcaster):
+def publishTransform(view, timestamp, frame_id, output_bag):
     ground_truth_pose = interpolate_poses(view.shutter_open,
                                           view.shutter_close, 0.5)
     scale, shear, angles, transl, persp = tf.transformations.decompose_matrix(
         camera_to_world_with_pose(ground_truth_pose))
     rotation = tf.transformations.quaternion_from_euler(*angles)
 
-    tf_broadcaster.sendTransform(transl, rotation, timestamp, frame_id,
-                                 "world")
+    trans = TransformStamped()
+    trans.header.stamp = timestamp
+    trans.header.frame_id = 'world'
+    trans.child_frame_id = frame_id
+    trans.transform.translation.x = transl[0]
+    trans.transform.translation.y = transl[1]
+    trans.transform.translation.z = transl[2]
+    trans.transform.rotation.x = rotation[0]
+    trans.transform.rotation.y = rotation[1]
+    trans.transform.rotation.z = rotation[2]
+    trans.transform.rotation.w = rotation[3]
+
+    msg = tfMessage()
+    msg.transforms.append(trans)
+
+    output_bag.write('/tf', msg, timestamp)
 
 
-# Pack the 3 RGB channels into a single UINT32 field.
-def pack_rgb(red, green, blue):
+def pack_bgr(red, green, blue):
+    # Pack the 3 RGB channels into a single INT field.
     return np.bitwise_or(
         np.bitwise_or(
-            np.left_shift(red.astype(np.uint8), 16),
-            np.left_shift(green.astype(np.uint8), 8)), blue.astype(np.uint8))
+            np.left_shift(blue.astype(np.int64), 16),
+            np.left_shift(green.astype(np.int64), 8)), red.astype(np.int64))
 
 
 def euclidean_ray_length_to_z_coordinate(depth_image, camera_model):
@@ -147,10 +161,10 @@ def euclidean_ray_length_to_z_coordinate(depth_image, camera_model):
     constant_x = 1 / camera_model.fx()
     constant_y = 1 / camera_model.fy()
 
-    vs = np.array([(v - center_x) * constant_x
-                   for v in range(0, depth_image.shape[1])])
-    us = np.array([(u - center_y) * constant_y
-                   for u in range(0, depth_image.shape[0])])
+    vs = np.array(
+        [(v - center_x) * constant_x for v in range(0, depth_image.shape[1])])
+    us = np.array(
+        [(u - center_y) * constant_y for u in range(0, depth_image.shape[0])])
 
     return (np.sqrt(
         np.square(depth_image / 1000.0) /
@@ -172,10 +186,10 @@ def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
         PointField(name='rgb', offset=12, datatype=PointField.UINT32, count=1)
     ]
 
-    vs = np.array([(v - center_x) * constant_x
-                   for v in range(0, depth_image.shape[1])])
-    us = np.array([(u - center_y) * constant_y
-                   for u in range(0, depth_image.shape[0])])
+    vs = np.array(
+        [(v - center_x) * constant_x for v in range(0, depth_image.shape[1])])
+    us = np.array(
+        [(u - center_y) * constant_y for u in range(0, depth_image.shape[0])])
 
     # Convert depth from cm to m.
     depth_image = depth_image / 1000.0
@@ -187,10 +201,10 @@ def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
     compressed = stacked.compressed()
     pointcloud = compressed.reshape((int(compressed.shape[0] / 6), 6))
 
-    pointcloud = [[
-        point[0], point[1], point[2],
-        pack_rgb(point[3], point[4], point[5])
-    ] for point in pointcloud]
+    pointcloud = np.hstack((pointcloud[:, 0:3],
+                            pack_bgr(*pointcloud.T[3:6])[:, None]))
+    pointcloud = [[point[0], point[1], point[2], point[3]]
+                  for point in pointcloud]
 
     pointcloud = pc2.create_cloud(Header(), pointcloud_xzyrgb_fields,
                                   pointcloud)
@@ -217,67 +231,28 @@ def mono_to_rgb(mono_image):
     red_bit_shift = 1.0 / 2**16
     green_bit_shift = 1.0 / 2**8
 
-    bit_shifters = np.dstack(
-        (np.full(mono_image.shape, red_bit_shift), np.full(
-            mono_image.shape, green_bit_shift), np.full(mono_image.shape, 1)))
+    bit_shifters = np.dstack((np.full(mono_image.shape, red_bit_shift),
+                              np.full(mono_image.shape, green_bit_shift),
+                              np.full(mono_image.shape, 1)))
 
     # Packed RGB values shifted by correct amount.
-    shifted_rgb_image = np.multiply(packed_rgb_image,
-                                    bit_shifters).astype(np.uint8)
+    shifted_rgb_image = np.multiply(packed_rgb_image, bit_shifters).astype(
+        np.uint8)
 
     # Apply mask to get final RGB values.
-    rgb_image = np.bitwise_and(shifted_rgb_image,
-                               np.array([0x0000ff])).astype(np.uint8)
+    rgb_image = np.bitwise_and(shifted_rgb_image, np.array([0x0000ff])).astype(
+        np.uint8)
     return rgb_image
 
 
-def publish():
-    print("something")
+def publish(scenenet_path, trajectory, output_bag, to_frame):
     rospy.init_node('scenenet_node', anonymous=True)
     frame_id = "/scenenet_camera_frame"
 
-    # Publishing at 1 Hz as SceneNet dataset is at 1 Hz rate.
-    # Higher rates should be achieved by recording rosbags,
-    # as the computation complexity here cannot guarantee more than 1 Hz.
-    publishing_rate = 1
-
     publish_object_segments = True
-    publish_scene_pcl = False
+    publish_scene_pcl = True
     publish_rgbd = True
     publish_instances = True
-
-    # Choose the desired trajectory to publish.
-    # Unfortunately, the trajectory indices don't match their render_path, so
-    # trajectory with index 3 could map to the folder 0/123 in your data folder.
-    # One can choose the folder with the desired trajectory and identify the
-    # corresponding trajectory index by checking the "render_path" field.
-    published_trajectory = 2
-
-    # RGBD and pointcloud publishers.
-    if (publish_object_segments):
-        publisher_object_segment_pcl = rospy.Publisher(
-            '/scenenet_node/object_segment', PointCloud2, queue_size=100)
-
-    if (publish_scene_pcl):
-        publisher_scene_pcl = rospy.Publisher(
-            '/scenenet_node/scene', PointCloud2, queue_size=100)
-
-    if (publish_rgbd):
-        publisher_rgb_image = rospy.Publisher(
-            '/camera/rgb/image_raw', Image, queue_size=100)
-        publisher_depth_image = rospy.Publisher(
-            '/camera/depth/image_raw', Image, queue_size=100)
-
-        publisher_rgb_camera_info = rospy.Publisher(
-            '/camera/rgb/camera_info', CameraInfo, queue_size=100)
-        publisher_depth_camera_info = rospy.Publisher(
-            '/camera/depth/camera_info', CameraInfo, queue_size=100)
-
-    if (publish_instances):
-        publisher_instance_image = rospy.Publisher(
-            '/camera/instances/image_raw', Image, queue_size=100)
-
-    tf_broadcaster = tf.TransformBroadcaster()
 
     # Set camera information and model.
     camera_info = get_camera_info()
@@ -285,7 +260,6 @@ def publish():
     camera_model.fromCameraInfo(camera_info)
 
     # Initialize some vars.
-    rate = rospy.Rate(publishing_rate)
     header = Header(frame_id=frame_id)
     cvbridge = CvBridge()
     trajectories = sn.Trajectories()
@@ -300,21 +274,26 @@ def publish():
         print(
             'Please ensure you have copied the pb file to the data directory')
 
-    traj = trajectories.trajectories[published_trajectory]
+    # Unfortunately, the trajectory indices don't match their render_path,
+    # so trajectory with index 3 could map to the folder 0/123 in
+    # your data/val folder.
+    # One can choose the folder with the desired trajectory and identify the
+    # corresponding trajectory index by checking the "render_path" field.
+    traj = trajectories.trajectories[trajectory]
+    print('Publishing trajectory from location: ' + format(traj.render_path))
     '''
     The views attribute of trajectories contains all of the information
     about the rendered frames of a scene.  This includes camera poses,
     frame numbers and timestamps.
     '''
     view_idx = 0
-    while not rospy.is_shutdown() and view_idx < len(traj.views):
+    while (not rospy.is_shutdown()) and view_idx < len(
+            traj.views) and view_idx < (to_frame + 1):
         view = traj.views[view_idx]
-
         timestamp = rospy.Time(
             interpolate_timestamps(view.shutter_open.timestamp,
                                    view.shutter_close.timestamp, 0.5))
-        publishTransform(view, timestamp, frame_id, tf_broadcaster)
-
+        publishTransform(view, timestamp, frame_id, output_bag)
         header.stamp = timestamp
 
         # Read RGB, Depth and Instance images for the current view.
@@ -355,29 +334,32 @@ def publish():
                 object_segment_pcl = convert_rgbd_to_pcl(
                     masked_rgb_image, masked_depth_image, camera_model)
                 object_segment_pcl.header = header
-                publisher_object_segment_pcl.publish(object_segment_pcl)
+                output_bag.write('/scenenet_node/object_segment',
+                                 object_segment_pcl, timestamp)
 
         if (publish_scene_pcl):
             # Publish the scene for the current view as pointcloud.
             scene_pcl = convert_rgbd_to_pcl(rgb_image, depth_image,
                                             camera_model)
             scene_pcl.header = header
-            publisher_scene_pcl.publish(scene_pcl)
+            output_bag.write('/scenenet_node/scene', scene_pcl, timestamp)
 
         if (publish_rgbd):
             # Publish the RGBD data.
             rgb_msg = cvbridge.cv2_to_imgmsg(rgb_image, "bgr8")
             rgb_msg.header = header
-            publisher_rgb_image.publish(rgb_msg)
+            output_bag.write('/camera/rgb/image_raw', rgb_msg, timestamp)
+            # publisher_rgb_image.publish(rgb_msg)
 
             depth_msg = cvbridge.cv2_to_imgmsg(depth_image, "16UC1")
             depth_msg.header = header
-            publisher_depth_image.publish(depth_msg)
+            output_bag.write('/camera/depth/image_raw', depth_msg, timestamp)
 
             camera_info.header = header
 
-            publisher_rgb_camera_info.publish(camera_info)
-            publisher_depth_camera_info.publish(camera_info)
+            output_bag.write('/camera/rgb/camera_info', camera_info, timestamp)
+            output_bag.write('/camera/depth/camera_info', camera_info,
+                             timestamp)
 
         if (publish_instances):
             # Publish the instance data.
@@ -385,19 +367,57 @@ def publish():
             color_instance_msg = cvbridge.cv2_to_imgmsg(
                 color_instance_image, "bgr8")
             color_instance_msg.header = header
-            publisher_instance_image.publish(color_instance_msg)
+            output_bag.write('/camera/instances/image_raw', color_instance_msg,
+                             timestamp)
 
         print("Dataset timestamp: " + str(timestamp.secs) + "." +
-              str(timestamp.nsecs) + "     Frame: " + str(view_idx + 1) + " / "
-              + str(len(traj.views)))
+              str(timestamp.nsecs) + "     Frame: " + str(view_idx + 1) +
+              " / " + str(len(traj.views)))
 
         view_idx += 1
-        rate.sleep()
 
 
 if __name__ == '__main__':
-    try:
-        publish()
+    parser = argparse.ArgumentParser(
+        description='Write SceneNet data to a rosbag.')
+    parser.add_argument(
+        "-scenenet_path",
+        default="../pySceneNetRGBD",
+        help="Path to the pySceneNetRGBD folder.")
+    parser.add_argument(
+        "-trajectory",
+        default=1,
+        help="SceneNet trajectory number to write to the bag.")
+    parser.add_argument(
+        "-to_frame",
+        default=np.inf,
+        help="Number of frames to write to the bag.")
+    parser.add_argument(
+        "-output_bag",
+        default="scenenet.bag",
+        help="Path to the output rosbag.")
 
+    args = parser.parse_args()
+    if args.scenenet_path:
+        scenenet_path = args.scenenet_path
+    if args.trajectory:
+        trajectory = int(args.trajectory)
+    if args.output_bag:
+        output_bag_path = args.output_bag
+    if args.to_frame:
+        to_frame = round(args.to_frame)
+
+    # Include the pySceneNetRGBD folder to the path and import its modules.
+    sys.path.append(scenenet_path)
+    import scenenet_pb2 as sn
+
+    data_root_path = os.path.join(scenenet_path, 'data/val')
+    protobuf_path = os.path.join(scenenet_path, 'data/scenenet_rgbd_val.pb')
+
+    bag = rosbag.Bag(output_bag_path, 'w')
+    try:
+        publish(scenenet_path, trajectory, bag, to_frame)
     except rospy.ROSInterruptException:
         pass
+    finally:
+        bag.close()
