@@ -370,9 +370,9 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
             output_bag.write('/camera/instances/image_raw', color_instance_msg,
                              timestamp)
 
-        print("Dataset timestamp: " + str(timestamp.secs) + "." +
-              str(timestamp.nsecs) + "     Frame: " + str(view_idx + 1) +
-              " / " + str(len(traj.views)))
+        print("Dataset timestamp: " + '{:4}'.format(timestamp.secs) + "." +
+              '{:09}'.format(timestamp.nsecs) + "     Frame: " +
+              '{:3}'.format(view_idx + 1) + " / " + str(len(traj.views)))
 
         view_idx += 1
 
