@@ -13,7 +13,14 @@
   <buildtool_depend>catkin</buildtool_depend>
   <buildtool_depend>catkin_simple</buildtool_depend>
 
+  <depend>cv_bridge</depend>
+  <depend>geometry_msgs</depend>
   <depend>image_geometry</depend>
+  <depend>opencv3_catkin</depend>
+  <depend>rosbag</depend>
   <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf</depend>
 
 </package>
