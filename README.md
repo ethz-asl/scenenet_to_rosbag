@@ -30,7 +30,6 @@ Tools for converting the SceneNet datasets to ROS messages in a rosbag.
 4. Run the Python script as a ROS node to write a SceneNet trajectory data to a rosbag as a sequence of RGB and depth images, colored pointclouds of the scene, ground truth instance segmentation images, and colored pointclouds of ground truth instance segments.
 
     ```bash
-    cd ..
     rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path SCENENET_PATH -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
     ```
 
@@ -46,7 +45,7 @@ Tools for converting the SceneNet datasets to ROS messages in a rosbag.
     /camera/depth/image_raw         : sensor_msgs/Image        
     /camera/rgb/camera_info         : sensor_msgs/CameraInfo
     /camera/rgb/image_raw           : sensor_msgs/Image
-    # Ground truth instance segmentation image
+    # Ground truth 2D instance segmentation image
     /camera/instances/image_raw     : sensor_msgs/Image
     # Colored pointcloud of ground truth instance segment         
     /scenenet_node/object_segment   : sensor_msgs/PointCloud2
