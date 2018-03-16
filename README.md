@@ -20,16 +20,24 @@ Tools for converting the SceneNet datasets to ROS messages in a rosbag.
     cd .. && make
     ```
 
-3. Run the Python script writing a SceneNet trajectory data to a rosbag as a sequence of RGB and depth images, coloured pointclouds of the scene, ground truth instance segmentation images, and coloured pointclouds of ground truth instance segments.
+3. Build your catkin workspace and source the devel space.
 
     ```bash
-    cd ../scenenet_ros_tools
-    python scenenet_to_rosbag.py -scenenet_path SCENENET_PATH -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
+    catkin build
+    source <catkin_ws>/devel/setup.bash
+    ```
+
+4. Run the Python script as a ROS node to write a SceneNet trajectory data to a rosbag as a sequence of RGB and depth images, colored pointclouds of the scene, ground truth instance segmentation images, and colored pointclouds of ground truth instance segments.
+
+    ```bash
+    cd ..
+    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path SCENENET_PATH -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
     ```
 
     For example:
     ```bash
-    python scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD -trajectory 1 -output_bag scenenet_traj_1.bag
+    cd ..
+    rosrun scenenet_ros_tools  scenenet_to_rosbag.py -scenenet_path pySceneNetRGBD/ -trajectory 1 -output_bag scenenet_traj_1.bag
     ```
     The output bag contains the following topics:
     ```bash
@@ -40,9 +48,9 @@ Tools for converting the SceneNet datasets to ROS messages in a rosbag.
     /camera/rgb/image_raw           : sensor_msgs/Image
     # Ground truth instance segmentation image
     /camera/instances/image_raw     : sensor_msgs/Image
-    # Cloured pointcloud of ground truth instance segment         
+    # Colored pointcloud of ground truth instance segment         
     /scenenet_node/object_segment   : sensor_msgs/PointCloud2
-    #  Coloured pointcloud of the scene
+    # Colored pointcloud of the scene
     /scenenet_node/scene            : sensor_msgs/PointCloud2
     # Transform from /scenenet_camera_frame to /world
     /tf                             : tf/tfMessage

@@ -2,22 +2,19 @@
 import os
 import sys
 import argparse
-
+import numpy as np
 import rosbag
 import rospy
-
-import numpy as np
-
 import cv2
-from cv_bridge import CvBridge
-from image_geometry import PinholeCameraModel
-import tf
 
-from std_msgs.msg import Header
-from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
+from cv_bridge import CvBridge
 from geometry_msgs.msg import Point32, TransformStamped
+from image_geometry import PinholeCameraModel
+from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
+from std_msgs.msg import Header
 from tf.msg import tfMessage
 import sensor_msgs.point_cloud2 as pc2
+import tf
 
 
 # These functions produce a file path (on Linux systems) to the image given
@@ -205,6 +202,8 @@ def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
                             pack_bgr(*pointcloud.T[3:6])[:, None]))
     pointcloud = [[point[0], point[1], point[2], point[3]]
                   for point in pointcloud]
+    cv2.imshow("Display window", rgb_image)
+    cv2.waitKey(0)
 
     pointcloud = pc2.create_cloud(Header(), pointcloud_xzyrgb_fields,
                                   pointcloud)
