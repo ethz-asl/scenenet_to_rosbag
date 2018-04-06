@@ -202,8 +202,6 @@ def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
                             pack_bgr(*pointcloud.T[3:6])[:, None]))
     pointcloud = [[point[0], point[1], point[2], point[3]]
                   for point in pointcloud]
-    cv2.imshow("Display window", rgb_image)
-    cv2.waitKey(0)
 
     pointcloud = pc2.create_cloud(Header(), pointcloud_xzyrgb_fields,
                                   pointcloud)

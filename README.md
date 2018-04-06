@@ -26,7 +26,7 @@ Tools for converting the SceneNet dataset to ROS messages in a rosbag.
 
     ```bash
     cd ../scenenet_ros_tools && chmod +x nodes/scenenet_to_rosbag.py
-    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path SCENENET_PATH -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
+    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path PATH/TO/pySceneNetRGBD -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
     ```
 
     For example:
