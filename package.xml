@@ -2,7 +2,7 @@
 <package format="2">
   <name>scenenet_ros_tools</name>
   <version>1.0.0</version>
-  <description>Publish SceneNet data via ROS</description>
+  <description>Tools for converting SceneNet to ROS bag files.</description>
 
   <author email="margarita.grinvald@mavt.ethz.ch">Margarita Grinvald</author>
 

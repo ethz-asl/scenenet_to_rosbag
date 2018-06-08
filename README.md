@@ -1,5 +1,5 @@
 # Interfacing SceneNet and ROS
-Tools for converting the SceneNet dataset to ROS messages in a rosbag.
+Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scenenet-rgbd.html) dataset and converting its trajectories to a ROS bag.
 
 ## How to use these tools
 1. Clone this and the [pySceneNetRGBD](https://github.com/jmccormac/pySceneNetRGBD) repositories to the `src` folder of your catkin workspace, build your workspace and source it.
@@ -12,7 +12,7 @@ Tools for converting the SceneNet dataset to ROS messages in a rosbag.
     source <catkin_ws>/devel/setup.bash
     ```
 
-2. Download the SceneNet validation set (15GB) and the validation set protobuf file to the `data` directory of the `pySceneNetRGBD` folder, then run make in the root `pySceneNetRGBD` folder to generate the protobuf description.
+2. Get started with the validation set. Download the SceneNet validation set (15GB) and the validation set protobuf file to the `data` directory of the `pySceneNetRGBD` folder, then run make in the root `pySceneNetRGBD` folder to generate the protobuf description.
 
     ```bash
     cd pySceneNetRGBD/data
