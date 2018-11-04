@@ -251,7 +251,7 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
     publish_rgbd = True
     publish_instances = True
     # True if publishing instance as rgb value
-    publish_instances_color = False
+    publish_instances_color = True
 
     # Set camera information and model.
     camera_info = get_camera_info()
