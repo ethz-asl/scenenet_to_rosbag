@@ -26,7 +26,7 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
 
     ```bash
     cd ../scenenet_ros_tools && chmod +x nodes/scenenet_to_rosbag.py
-    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path PATH/TO/pySceneNetRGBD -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG
+    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path PATH/TO/pySceneNetRGBD -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG -protobuf_path PATH/TO/protobuf_file -dataset_type EITHER_val_OR_train
     ```
 
     For example:
