@@ -251,7 +251,7 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
     publish_rgbd = True
     publish_instances = True
     # True if publishing instance as rgb value
-    publish_instances_color = True
+    publish_instances_color = False
 
     # Set camera information and model.
     camera_info = get_camera_info()
@@ -392,6 +392,12 @@ if __name__ == '__main__':
         default="../pySceneNetRGBD",
         help="Path to the pySceneNetRGBD folder.")
     parser.add_argument(
+        "-protobuf_path",
+        help="Path to the protobuf file.")
+    parser.add_argument(
+        "-dataset_type",
+        help="Type of the dataset to use (can be either 'train' or 'val').")
+    parser.add_argument(
         "-trajectory",
         default=1,
         help="SceneNet trajectory number to write to the bag.")
@@ -407,6 +413,28 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.scenenet_path:
         scenenet_path = args.scenenet_path
+    if args.protobuf_path:
+        protobuf_path = args.protobuf_path
+    else:
+        # Default
+        protobuf_path = os.path.join(scenenet_path, 'data/scenenet_rgbd_val.pb')
+        print("Path to protobuf file not found as an argument (use "
+              "-protobuf_path to indicate one). Using default value "
+              "{}".format(protobuf_path))
+    if args.dataset_type:
+        # Check that dataset_type is valid
+        if args.dataset_type in ("train", "val"):
+            dataset_type = args.dataset_type
+        else:
+            print("Invalid dataset type (valid options are 'train' and 'val'). "
+                  "Using the default value 'val'.")
+            dataset_type = "val"
+    else:
+        # Default
+        dataset_type = "val"
+        print("Dataset type not found as an argument (use -dataset_type to "
+              "indicate one. Valid values are 'train' and 'val'). Using "
+              "default value 'val'.")
     if args.trajectory:
         trajectory = int(args.trajectory)
     if args.output_bag:
@@ -418,8 +446,7 @@ if __name__ == '__main__':
     sys.path.append(scenenet_path)
     import scenenet_pb2 as sn
 
-    data_root_path = os.path.join(scenenet_path, 'data/val')
-    protobuf_path = os.path.join(scenenet_path, 'data/scenenet_rgbd_val.pb')
+    data_root_path = os.path.join(scenenet_path, 'data/{}'.format(dataset_type))
 
     bag = rosbag.Bag(output_bag_path, 'w')
     try:
