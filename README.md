@@ -16,8 +16,8 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
 
     ```bash
     cd pySceneNetRGBD/data
-    wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb scenenet_rgbd_val.pb
-    wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz SceneNetRGBD-val.tar.gz
+    wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb
+    wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz
     tar -xvzf SceneNetRGBD-val.tar.gz
     cd .. && make
     ```
@@ -42,6 +42,8 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     /camera/rgb/image_raw           : sensor_msgs/Image
     # Ground truth 2D instance segmentation image
     /camera/instances/image_raw     : sensor_msgs/Image
+    # Ground truth colorized 2D instance segmentation image
+    /camera/instances/image_rgb     : sensor_msgs/Image
     # Colored pointcloud of ground truth instance segment         
     /scenenet_node/object_segment   : sensor_msgs/PointCloud2
     # Colored pointcloud of the scene
