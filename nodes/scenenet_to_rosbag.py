@@ -397,6 +397,7 @@ if __name__ == '__main__':
         help="Path to the protobuf file.")
     parser.add_argument(
         "-dataset_type",
+        default="val",
         help="Type of the dataset to use (can be either 'train' or 'val').")
     parser.add_argument(
         "-trajectory",
