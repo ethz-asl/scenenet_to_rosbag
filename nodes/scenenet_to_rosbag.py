@@ -392,10 +392,6 @@ if __name__ == '__main__':
         default="../pySceneNetRGBD",
         help="Path to the pySceneNetRGBD folder.")
     parser.add_argument(
-        "-protobuf_path",
-        default="data/scenenet_rgbd_val.pb",
-        help="Path to the protobuf file.")
-    parser.add_argument(
         "-dataset_type",
         help="Type of the dataset to use (can be either 'train' or 'val').")
     parser.add_argument(
@@ -414,14 +410,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.scenenet_path:
         scenenet_path = args.scenenet_path
-    if args.protobuf_path:
-        protobuf_path = args.protobuf_path
-    else:
-        # Default
-        protobuf_path = os.path.join(scenenet_path, 'data/scenenet_rgbd_val.pb')
-        print("Path to protobuf file not found as an argument (use "
-              "-protobuf_path to indicate one). Using default value "
-              "{}".format(protobuf_path))
     if args.dataset_type:
         # Check that dataset_type is valid
         if args.dataset_type in ("train", "val"):
@@ -442,6 +430,9 @@ if __name__ == '__main__':
         output_bag_path = args.output_bag
     if args.to_frame:
         to_frame = round(args.to_frame)
+
+    protobuf_path = os.path.join(
+        scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type))
 
     # Include the pySceneNetRGBD folder to the path and import its modules.
     sys.path.append(scenenet_path)
