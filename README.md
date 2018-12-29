@@ -23,6 +23,16 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     tar -xvzf SceneNetRGBD-val.tar.gz
     cd .. && make
     ```
+You can do the same for the SceneNet training set, which is split into 17 smaller sets (each of size 15GB). Please make sure to place all the protobuf files directly in the `data` directory, by using the `--strip=1` argument when extracting the archive. Inside `pySceneNetRGBD/data`:
+
+    ```bash
+    wget http://www.doc.ic.ac.uk/~ahanda/train_protobufs.tar.gz train_protobufs.tar.gz
+    tar -xvzf train_protobufs.tar.gz --strip=1
+    # e.g. first training set (index 0)
+    wget http://www.doc.ic.ac.uk/~ahanda/train_split/train_0.tar.gz train_0.tar.gz
+    tar -xvzf train_0.tar.gz
+    cd .. && make
+    ```
 
 3. Make the Python script executable and run it as a ROS node to write the SceneNet trajectory data to a rosbag. The rosbag will contain a sequence of RGB and depth images, colored pointclouds of the scene, ground truth 2D instance segmentation images, and colored pointclouds of ground truth instance segments.
 
