@@ -43,7 +43,7 @@ You can do the same for the SceneNet training set, which is split into 17 smalle
 
     For example:
     ```bash
-    rosrun scenenet_ros_tools  scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD/ -trajectory 1 -output_bag scenenet_traj_1.bag
+    rosrun scenenet_ros_tools  scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD/ -trajectory 1 -dataset_type train_0 -output_bag scenenet_train_0_traj_1.bag
     ```
     The output bag contains the following topics:
     ```bash

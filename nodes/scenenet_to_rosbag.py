@@ -397,7 +397,6 @@ if __name__ == '__main__':
         default="val",
         help="Type of the dataset to use (can be either 'val' or 'train_NUM', "
         "where NUM is a number between 0 and 16).")
-
     parser.add_argument(
         "-trajectory",
         default=1,
