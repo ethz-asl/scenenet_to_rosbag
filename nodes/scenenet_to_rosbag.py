@@ -393,6 +393,7 @@ if __name__ == '__main__':
         help="Path to the pySceneNetRGBD folder.")
     parser.add_argument(
         "-protobuf_path",
+        default="data/scenenet_rgbd_val.pb",
         help="Path to the protobuf file.")
     parser.add_argument(
         "-dataset_type",
