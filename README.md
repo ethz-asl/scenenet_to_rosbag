@@ -15,7 +15,9 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
 2. Get started with the validation set. Download the SceneNet validation set (15GB) and the validation set protobuf file to the `data` directory of the `pySceneNetRGBD` folder, then run make in the root `pySceneNetRGBD` folder to generate the protobuf description.
 
     ```bash
-    cd pySceneNetRGBD/data
+    cd pySceneNetRGBD
+    mkdir data
+    cd data
     wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb scenenet_rgbd_val.pb
     wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz SceneNetRGBD-val.tar.gz
     tar -xvzf SceneNetRGBD-val.tar.gz
