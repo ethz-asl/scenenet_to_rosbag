@@ -422,9 +422,6 @@ if __name__ == '__main__':
     if args.to_frame:
         to_frame = round(args.to_frame)
 
-    protobuf_path = os.path.join(
-        scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type))
-
     # Include the pySceneNetRGBD folder to the path and import its modules.
     sys.path.append(scenenet_path)
     import scenenet_pb2 as sn
@@ -436,6 +433,8 @@ if __name__ == '__main__':
     # that index and trajectory.
     data_root_path = os.path.join(scenenet_path, 'data/{}'.format(
         dataset_type.split('_')[0]))
+    protobuf_path = os.path.join(
+        scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type))
 
     bag = rosbag.Bag(output_bag_path, 'w')
     try:
