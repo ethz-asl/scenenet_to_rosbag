@@ -12,25 +12,26 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     source <catkin_ws>/devel/setup.bash
     ```
 
-2. Get started with the validation set. Download the SceneNet validation set (15GB) and the validation set protobuf file to the `data` directory of the `pySceneNetRGBD` folder, then run make in the root `pySceneNetRGBD` folder to generate the protobuf description.
+2. Download the SceneNet training (263GB split into 17 tarballs of 16GB each) and/or validation set (15GB) with the respective protobuf files to the `data` directory of the `pySceneNetRGBD` folder, then run `make` in the root `pySceneNetRGBD` folder to generate the protobuf description.
 
     ```bash
     cd pySceneNetRGBD
-    mkdir data
-    cd data
+    mkdir data && cd data
+
+    # Training set
+    wget http://www.doc.ic.ac.uk/~ahanda/train_protobufs.tar.gz train_protobufs.tar.gz
+    tar -xvzf train_protobufs.tar.gz --strip=1
+    wget http://www.doc.ic.ac.uk/~ahanda/train_split/train_0.tar.gz train_0.tar.gz
+    tar -xvzf train_0.tar.gz
+    wget http://www.doc.ic.ac.uk/~ahanda/train_split/train_1.tar.gz train_1.tar.gz
+    tar -xvzf train_1.tar.gz
+    ...
+
+    # Validation set
     wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb scenenet_rgbd_val.pb
     wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz SceneNetRGBD-val.tar.gz
     tar -xvzf SceneNetRGBD-val.tar.gz
-    cd .. && make
-    ```
-You can do the same for the SceneNet training set, which is split into 17 smaller sets (each of size 15GB). Please make sure to place all the protobuf files directly in the `data` directory, by using the `--strip=1` argument when extracting the archive. Inside `pySceneNetRGBD/data`:
 
-    ```bash
-    wget http://www.doc.ic.ac.uk/~ahanda/train_protobufs.tar.gz train_protobufs.tar.gz
-    tar -xvzf train_protobufs.tar.gz --strip=1
-    # e.g. first training set (index 0)
-    wget http://www.doc.ic.ac.uk/~ahanda/train_split/train_0.tar.gz train_0.tar.gz
-    tar -xvzf train_0.tar.gz
     cd .. && make
     ```
 
