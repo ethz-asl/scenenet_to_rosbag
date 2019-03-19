@@ -246,16 +246,16 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
     rospy.init_node('scenenet_node', anonymous=True)
     frame_id = "/scenenet_camera_frame"
 
-    # Publish colored pointclouds of instance segments.
-    publish_object_segments = True
-    # Publish colored pointcloud of the whole scene.
-    publish_scene_pcl = True
     # Publish RGB and depth images.
     publish_rgbd = True
     # Publish instance image.
     publish_instances = True
     # Publish colorized instance image.
     publish_instances_color = True
+    # Publish colored pointclouds of instance segments.
+    publish_object_segments = False
+    # Publish colored pointcloud of the whole scene.
+    publish_scene_pcl = False
 
     # Set camera information and model.
     camera_info = get_camera_info()
