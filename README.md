@@ -52,10 +52,10 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     The output bag contains the following topics:
     ```bash
     # RGB and depth images
-    /camera/depth/camera_info       : sensor_msgs/CameraInfo
-    /camera/depth/image_raw         : sensor_msgs/Image        
     /camera/rgb/camera_info         : sensor_msgs/CameraInfo
     /camera/rgb/image_raw           : sensor_msgs/Image
+    /camera/depth/camera_info       : sensor_msgs/CameraInfo
+    /camera/depth/image_raw         : sensor_msgs/Image        
 
     # Ground truth 2D instance segmentation image
     /camera/instances/image_raw     : sensor_msgs/Image
@@ -65,7 +65,7 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
 
     # Colored pointcloud of ground truth instance segment [Disabled by default]
     /scenenet_node/object_segment   : sensor_msgs/PointCloud2
-    
+
     # Colored pointcloud of the scene                     [Disabled by default]
     /scenenet_node/scene            : sensor_msgs/PointCloud2
 
