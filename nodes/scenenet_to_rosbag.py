@@ -251,7 +251,7 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
     # Publish instance image.
     publish_instances = True
     # Publish colorized instance image.
-    publish_instances_color = True
+    publish_instances_color = False
     # Publish colored pointclouds of instance segments.
     publish_object_segments = False
     # Publish colored pointcloud of the whole scene.

@@ -60,13 +60,13 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     # Ground truth 2D instance segmentation image
     /camera/instances/image_raw     : sensor_msgs/Image
 
-    # Ground truth colorized 2D instance segmentation image
+    # Ground truth colorized 2D instance segmentation image [Disabled by default]
     /camera/instances/image_rgb     : sensor_msgs/Image
 
-    # Colored pointcloud of ground truth instance segment [Disabled by default]
+    # Colored pointclouds of ground truth instance segments [Disabled by default]
     /scenenet_node/object_segment   : sensor_msgs/PointCloud2
 
-    # Colored pointcloud of the scene                     [Disabled by default]
+    # Colored pointcloud of the scene                       [Disabled by default]
     /scenenet_node/scene            : sensor_msgs/PointCloud2
 
     # Transform from /scenenet_camera_frame to /world
