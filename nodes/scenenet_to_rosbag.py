@@ -166,7 +166,7 @@ def euclidean_ray_length_to_z_coordinate(depth_image, camera_model):
     return (np.sqrt(
         np.square(depth_image / 1000.0) /
         (1 + np.square(vs[np.newaxis, :]) + np.square(us[:, np.newaxis]))) *
-        1000.0).astype(np.uint16)
+            1000.0).astype(np.uint16)
 
 
 def convert_rgbd_to_pcl(rgb_image, depth_image, camera_model):
@@ -246,11 +246,15 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
     rospy.init_node('scenenet_node', anonymous=True)
     frame_id = "/scenenet_camera_frame"
 
+    # Publish colored pointclouds of instance segments.
     publish_object_segments = True
+    # Publish colored pointcloud of the whole scene.
     publish_scene_pcl = True
+    # Publish RGB and depth images.
     publish_rgbd = True
+    # Publish instance image.
     publish_instances = True
-    # True if publishing instance as rgb value
+    # Publish colorized instance image.
     publish_instances_color = True
 
     # Set camera information and model.
@@ -362,20 +366,21 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
 
         if (publish_instances):
             # Publish the instance data.
-            if (publish_instances_color):
-                color_instance_image = mono_to_rgb(instance_image)
-                color_instance_msg = cvbridge.cv2_to_imgmsg(
-                    color_instance_image, "bgr8")
-                color_instance_msg.header = header
+            instance_msg = cvbridge.cv2_to_imgmsg(instance_image, "16UC1")
+            instance_msg.header = header
 
-                output_bag.write('/camera/instances/image_raw',
-                                 color_instance_msg, timestamp)
-            else:
-                instance_msg = cvbridge.cv2_to_imgmsg(instance_image, "16UC1")
-                instance_msg.header = header
+            output_bag.write('/camera/instances/image_raw', instance_msg,
+                             timestamp)
 
-                output_bag.write('/camera/instances/image_raw', instance_msg,
-                                 timestamp)
+        if (publish_instances_color):
+            # Publish the instance data colorized.
+            color_instance_image = mono_to_rgb(instance_image)
+            color_instance_msg = cvbridge.cv2_to_imgmsg(
+                color_instance_image, "bgr8")
+            color_instance_msg.header = header
+
+            output_bag.write('/camera/instances/image_rgb', color_instance_msg,
+                             timestamp)
 
         print("Dataset timestamp: " + '{:4}'.format(timestamp.secs) + "." +
               '{:09}'.format(timestamp.nsecs) + "     Frame: " +

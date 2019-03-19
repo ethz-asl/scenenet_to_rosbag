@@ -54,6 +54,8 @@ You can do the same for the SceneNet training set, which is split into 17 smalle
     /camera/rgb/image_raw           : sensor_msgs/Image
     # Ground truth 2D instance segmentation image
     /camera/instances/image_raw     : sensor_msgs/Image
+    # Ground truth colorized 2D instance segmentation image
+    /camera/instances/image_rgb     : sensor_msgs/Image
     # Colored pointcloud of ground truth instance segment         
     /scenenet_node/object_segment   : sensor_msgs/PointCloud2
     # Colored pointcloud of the scene
