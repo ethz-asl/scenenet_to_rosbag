@@ -391,53 +391,50 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Write SceneNet data to a rosbag.')
+        description='Write data from a SceneNet RGB-D trajectory to a rosbag.')
     parser.add_argument(
         "-scenenet_path",
         default="../pySceneNetRGBD",
-        help="Path to the pySceneNetRGBD folder.")
+        help="path to the pySceneNetRGBD folder.")
     parser.add_argument(
         "-dataset_type",
-        choices=['val'] + ['train_{}'.format(i) for i in range(17)],
+        choices=['train', 'val'],
         default="val",
-        help="Type of the dataset to use (can be either 'val' or 'train_NUM', "
-        "where NUM is a number between 0 and 16).")
+        help="choice of the dataset to use.")
+    parser.add_argument(
+        "-test_set_split",
+        choices=[str(i) for i in range(17)],
+        default=0,
+        help="index of the test set split.")
     parser.add_argument(
         "-trajectory",
         default=1,
-        help="SceneNet trajectory number to write to the bag.")
+        help="trajectory number to write to the bag.")
     parser.add_argument(
         "-to_frame",
         default=np.inf,
-        help="Number of frames to write to the bag.")
+        help="number of frames to write to the bag.")
     parser.add_argument(
         "-output_bag",
         default="scenenet.bag",
-        help="Path to the output rosbag.")
+        help="path to the output rosbag.")
 
     args = parser.parse_args()
-    if args.scenenet_path:
-        scenenet_path = args.scenenet_path
-    if args.dataset_type:
-        dataset_type = args.dataset_type
-    if args.trajectory:
-        trajectory = int(args.trajectory)
-    if args.output_bag:
-        output_bag_path = args.output_bag
-    if args.to_frame:
-        to_frame = round(args.to_frame)
+    scenenet_path = args.scenenet_path
+    dataset_type = args.dataset_type
+    trajectory = int(args.trajectory)
+    output_bag_path = args.output_bag
+    to_frame = round(args.to_frame)
+
+    if (dataset_type == "train"):
+        dataset_type += "_" + args.test_set_split
 
     # Include the pySceneNetRGBD folder to the path and import its modules.
     sys.path.append(scenenet_path)
     import scenenet_pb2 as sn
 
-    # The validation dataset should be stored in scenenet_path/data/val, whereas
-    # all the training datasets should be in scenenet_path/data/train,
-    # independently on their indices (i.e., 0-16). This is because the render
-    # path in the protobuf file automatically finds the correct subfolder for
-    # that index and trajectory.
-    data_root_path = os.path.join(scenenet_path, 'data/{}'.format(
-        dataset_type.split('_')[0]))
+    # Training and validation datasets are stored in pySceneNetRGB/data/train[0-16] and pySceneNetRGB/data/val, respectively.
+    data_root_path = os.path.join(scenenet_path, 'data/' + dataset_type)
     protobuf_path = os.path.join(
         scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type))
 

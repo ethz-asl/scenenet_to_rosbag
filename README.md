@@ -39,12 +39,15 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
 
     ```bash
     cd ../scenenet_ros_tools && chmod +x nodes/scenenet_to_rosbag.py
-    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path PATH/TO/pySceneNetRGBD -trajectory TRAJECTORY -to_frame TO_FRAME -output_bag OUTPUT_BAG -dataset_type DATASET_TYPE
+    rosrun scenenet_ros_tools scenenet_to_rosbag.py -scenenet_path PATH/TO/pySceneNetRGBD -dataset_type DATASET_TYPE [-test_set_split TEST_SET_SPLIT] -trajectory TRAJECTORY [-to_frame TO_FRAME] [-output_bag OUTPUT_BAG]
     ```
-
-    For example:
+    Example for a trajectory from the training set:
     ```bash
-    rosrun scenenet_ros_tools  scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD/ -trajectory 1 -dataset_type train_0 -output_bag scenenet_train_0_traj_1.bag
+    rosrun scenenet_ros_tools  scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD/ -dataset_type train -test_set_split 0 -trajectory 1  -output_bag scenenet_train_0_traj_1.bag
+    ```
+    Example for a trajectory from the validation set:
+    ```bash
+    rosrun scenenet_ros_tools  scenenet_to_rosbag.py -scenenet_path ../pySceneNetRGBD/ -dataset_type val -trajectory 1 -output_bag scenenet_val_traj_1.bag
     ```
     The output bag contains the following topics:
     ```bash
