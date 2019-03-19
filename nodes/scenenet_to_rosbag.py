@@ -397,6 +397,12 @@ if __name__ == '__main__':
         default="../pySceneNetRGBD",
         help="Path to the pySceneNetRGBD folder.")
     parser.add_argument(
+        "-dataset_type",
+        choices=['val'] + ['train_{}'.format(i) for i in range(17)],
+        default="val",
+        help="Type of the dataset to use (can be either 'val' or 'train_NUM', "
+        "where NUM is a number between 0 and 16).")
+    parser.add_argument(
         "-trajectory",
         default=1,
         help="SceneNet trajectory number to write to the bag.")
@@ -412,6 +418,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.scenenet_path:
         scenenet_path = args.scenenet_path
+    if args.dataset_type:
+        dataset_type = args.dataset_type
     if args.trajectory:
         trajectory = int(args.trajectory)
     if args.output_bag:
@@ -423,8 +431,15 @@ if __name__ == '__main__':
     sys.path.append(scenenet_path)
     import scenenet_pb2 as sn
 
-    data_root_path = os.path.join(scenenet_path, 'data/val')
-    protobuf_path = os.path.join(scenenet_path, 'data/scenenet_rgbd_val.pb')
+    # The validation dataset should be stored in scenenet_path/data/val, whereas
+    # all the training datasets should be in scenenet_path/data/train,
+    # independently on their indices (i.e., 0-16). This is because the render
+    # path in the protobuf file automatically finds the correct subfolder for
+    # that index and trajectory.
+    data_root_path = os.path.join(scenenet_path, 'data/{}'.format(
+        dataset_type.split('_')[0]))
+    protobuf_path = os.path.join(
+        scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type))
 
     bag = rosbag.Bag(output_bag_path, 'w')
     try:
