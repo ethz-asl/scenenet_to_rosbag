@@ -272,12 +272,13 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
         with open(protobuf_path, 'rb') as f:
             trajectories.ParseFromString(f.read())
     except IOError:
-        print('Scenenet protobuf data not found at location:{0}'.format(
-            data_root_path))
-        print(
-            'Please ensure you have copied the pb file to the data directory')
+        print('SceneNet protobuf data not found at location: {0}'.format(
+            protobuf_path))
+        sys.exit(
+            'Please ensure you have downloaded the protobuf file to the data directory.'
+        )
 
-    # Unfortunately, the trajectory indices don't match their render_path,
+    # Unfortunately, the trajectory indices do not match to their render_path,
     # so trajectory with index 3 could map to the folder 0/123 in
     # your data/val folder.
     # One can choose the folder with the desired trajectory and identify the
@@ -300,8 +301,13 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
         header.stamp = timestamp
 
         # Read RGB, Depth and Instance images for the current view.
-        rgb_image = cv2.imread(
-            photo_path_from_view(traj.render_path, view), cv2.IMREAD_COLOR)
+        photo_path = photo_path_from_view(traj.render_path, view)
+        if not os.path.exists(photo_path):
+            print(
+                "SceneNet RGB-D data not found at {0}. Please ensure you have downloaded the trajectory data.".
+                format(photo_path))
+            break
+        rgb_image = cv2.imread(photo_path, cv2.IMREAD_COLOR)
         depth_image = cv2.imread(
             depth_path_from_view(traj.render_path, view), cv2.IMREAD_UNCHANGED)
         instance_image = cv2.imread(
