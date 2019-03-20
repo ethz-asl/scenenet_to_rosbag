@@ -290,8 +290,8 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
     frame numbers and timestamps.
     '''
     view_idx = 0
-    while (not rospy.is_shutdown()) and view_idx < len(
-            traj.views) and view_idx < (to_frame + 1):
+    while (not rospy.is_shutdown() and view_idx < (to_frame)
+           and view_idx < len(traj.views)):
         view = traj.views[view_idx]
         timestamp = rospy.Time(
             interpolate_timestamps(view.shutter_open.timestamp,
@@ -391,42 +391,45 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Write data from a SceneNet RGB-D trajectory to a rosbag.')
+        description='Write data from a SceneNet RGB-D trajectory to a rosbag')
     parser.add_argument(
-        "-scenenet_path",
-        default="../pySceneNetRGBD",
-        help="path to the pySceneNetRGBD folder.")
+        "scenenet_path",
+        metavar="scenenet-path",
+        help="path to the pySceneNetRGBD folder")
     parser.add_argument(
-        "-dataset_type",
+        "dataset_type",
+        metavar="dataset-type",
         choices=['train', 'val'],
-        default="val",
-        help="choice of the dataset to use.")
+        help="choice of the dataset to use")
     parser.add_argument(
-        "-test_set_split",
+        "--test-set-split",
         choices=[str(i) for i in range(17)],
-        default=0,
-        help="index of the test set split.")
+        help="index of the test set split")
     parser.add_argument(
-        "-trajectory",
-        default=1,
-        help="trajectory number to write to the bag.")
+        "trajectory",
+        type=int,
+        help="index of the trajectory to write to the bag")
     parser.add_argument(
-        "-to_frame",
+        "--to-frame",
         default=np.inf,
-        help="number of frames to write to the bag.")
+        type=int,
+        help="number of frames to write to the bag")
     parser.add_argument(
-        "-output_bag",
+        "--output-bag",
         default="scenenet.bag",
-        help="path to the output rosbag.")
+        help="path to the output rosbag")
 
     args = parser.parse_args()
     scenenet_path = args.scenenet_path
     dataset_type = args.dataset_type
-    trajectory = int(args.trajectory)
+    trajectory = args.trajectory
     output_bag_path = args.output_bag
-    to_frame = round(args.to_frame)
+    to_frame = args.to_frame
 
-    if (dataset_type == "train"):
+    if dataset_type == "train":
+        if not args.test_set_split:
+            parser.error("argument --test-set-split is " \
+                         "required when --dataset-type=train.")
         dataset_type += "_" + args.test_set_split
 
     # Include the pySceneNetRGBD folder to the path and import its modules.
