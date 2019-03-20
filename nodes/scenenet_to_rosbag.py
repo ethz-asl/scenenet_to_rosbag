@@ -302,17 +302,15 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
 
         # Read RGB, Depth and Instance images for the current view.
         photo_path = photo_path_from_view(traj.render_path, view)
+        depth_path = depth_path_from_view(traj.render_path, view)
+        instance_path = instance_path_from_view(traj.render_path, view)
         if not os.path.exists(photo_path):
-            print(
-                "SceneNet RGB-D data not found at {0}. Please ensure you have downloaded the trajectory data.".
-                format(photo_path))
-            break
+            print("SceneNet RGB-D data not found at {0}".format(photo_path))
+            sys.exit("Please ensure you have downloaded the trajectory data.")
+
         rgb_image = cv2.imread(photo_path, cv2.IMREAD_COLOR)
-        depth_image = cv2.imread(
-            depth_path_from_view(traj.render_path, view), cv2.IMREAD_UNCHANGED)
-        instance_image = cv2.imread(
-            instance_path_from_view(traj.render_path, view),
-            cv2.IMREAD_UNCHANGED)
+        depth_image = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+        instance_image = cv2.imread(instance_path, cv2.IMREAD_UNCHANGED)
 
         # Transform depth values from the Euclidean ray length to the z coordinate.
         depth_image = euclidean_ray_length_to_z_coordinate(
