@@ -393,12 +393,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Write data from a SceneNet RGB-D trajectory to a rosbag')
     parser.add_argument(
-        "scenenet_path",
-        metavar="scenenet-path",
+        "--scenenet-path",
+        required=True,
         help="path to the pySceneNetRGBD folder")
     parser.add_argument(
-        "dataset_type",
-        metavar="dataset-type",
+        "--dataset-type",
+        required=True,
         choices=['train', 'val'],
         help="choice of the dataset to use")
     parser.add_argument(
@@ -406,8 +406,9 @@ if __name__ == '__main__':
         choices=[str(i) for i in range(17)],
         help="index of the test set split")
     parser.add_argument(
-        "trajectory",
+        "--trajectory",
         type=int,
+        required=True,
         help="index of the trajectory to write to the bag")
     parser.add_argument(
         "--to-frame",
