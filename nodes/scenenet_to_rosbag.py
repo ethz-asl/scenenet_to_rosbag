@@ -391,12 +391,9 @@ def publish(scenenet_path, trajectory, output_bag, to_frame):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        usage='''%(prog)s --scenenet-path PATH
-                             --dataset-type {train,val}
-                             --trajectory INDEX
-                             [--train-set-split {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}]
-                             [--limit NUM]
-                             [--output-bag NAME]''',
+        usage='''%(prog)s [-h] --scenenet-path PATH --dataset-type {train,val}
+                             --trajectory INDEX [--train-set-split N]
+                             [--limit NUM] [--output-bag NAME]''',
         description='Write data from a SceneNet RGB-D trajectory to a rosbag.')
     parser.add_argument(
         "--scenenet-path",
