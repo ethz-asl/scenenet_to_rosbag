@@ -35,7 +35,7 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     cd .. && make
     ```
 
-3. Make the Python script executable and run it as a ROS node to write the SceneNet trajectory data to a rosbag. The rosbag will contain a sequence of RGB and depth images, colored pointclouds of the scene, ground truth 2D instance segmentation images, and colored pointclouds of ground truth instance segments.
+3. Make the Python script executable and run it as a ROS node to convert data from a SceneNet trajectory to a rosbag. The rosbag will contain a sequence of RGB and depth images, ground truth 2D instance label images, and relative transforms. Optionally, it can contain colorized ground truth 2D instance label images, colored pointclouds of the scene, and colored pointclouds of ground truth instance segments.
 
     ```bash
     cd ../scenenet_ros_tools && chmod +x nodes/scenenet_to_rosbag.py
