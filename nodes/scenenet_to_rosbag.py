@@ -255,7 +255,7 @@ def convert(scenenet_path, trajectory, to_frame, output_bag):
     # Write colored pointclouds of the instance segments.
     write_object_segments = False
     # Write colored pointclouds of the whole scene.
-    write_scene_pcl = False
+    write_scene_pcl = True
 
     # Set camera information and model.
     camera_info = get_camera_info()
@@ -443,7 +443,7 @@ if __name__ == '__main__':
         if not args.train_set_split:
             parser.error("argument --train-set-split is " \
                          "required when --dataset-type=train.")
-        dataset_type += "_" + args.train_set_split
+        dataset_type_protobuf = dataset_type + "_" + args.train_set_split
 
     # Include the pySceneNetRGBD folder to the path and import its modules.
     sys.path.append(scenenet_path)
@@ -452,7 +452,7 @@ if __name__ == '__main__':
     # Training and validation datasets are stored in pySceneNetRGB/data/train[0-16] and pySceneNetRGB/data/val, respectively.
     data_root_path = os.path.join(scenenet_path, 'data/' + dataset_type)
     protobuf_path = os.path.join(
-        scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type))
+        scenenet_path, 'data/scenenet_rgbd_{}.pb'.format(dataset_type_protobuf))
 
     if not output_bag_path.endswith(".bag"):
         output_bag_path = output_bag_path + ".bag"
