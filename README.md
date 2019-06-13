@@ -1,5 +1,5 @@
 # Interfacing SceneNet and ROS
-Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scenenet-rgbd.html) dataset and converting its trajectories to a ROS bag.
+Dataset tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scenenet-rgbd.html) dataset and converting its raw trajectory data to a ROS bag.
 
 ## How to use these tools
 1. Clone this and the [pySceneNetRGBD](https://github.com/jmccormac/pySceneNetRGBD) repositories to the `src` folder of your catkin workspace, build your workspace and source it.
