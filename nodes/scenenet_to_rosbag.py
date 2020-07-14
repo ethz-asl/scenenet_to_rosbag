@@ -125,13 +125,17 @@ def writeTransform(view, timestamp, frame_id, output_bag):
         camera_to_world_with_pose(ground_truth_pose))
     rotation = tf.transformations.quaternion_from_euler(*angles)
 
+    increment = 0
+    if (view.shutter_open.timestamp > 75):
+        increment = (view.shutter_open.timestamp - 75) * 1 / 100.0
+
     trans = TransformStamped()
     trans.header.stamp = timestamp
     trans.header.frame_id = 'world'
     trans.child_frame_id = frame_id
-    trans.transform.translation.x = transl[0]
-    trans.transform.translation.y = transl[1]
-    trans.transform.translation.z = transl[2]
+    trans.transform.translation.x = transl[0] + increment
+    trans.transform.translation.y = transl[1] + increment
+    trans.transform.translation.z = transl[2] + increment
     trans.transform.rotation.x = rotation[0]
     trans.transform.rotation.y = rotation[1]
     trans.transform.rotation.z = rotation[2]
@@ -249,11 +253,11 @@ def convert(scenenet_path, trajectory, to_frame, output_bag):
     # Write RGB and depth images.
     write_rgbd = True
     # Write instance image.
-    write_instances = True
+    write_instances = False
     # Write colorized instance image.
-    write_instances_color = False
+    write_instances_color = True
     # Write colored pointclouds of the instance segments.
-    write_object_segments = False
+    write_object_segments = True
     # Write colored pointclouds of the whole scene.
     write_scene_pcl = False
 
@@ -298,6 +302,7 @@ def convert(scenenet_path, trajectory, to_frame, output_bag):
             interpolate_timestamps(view.shutter_open.timestamp,
                                    view.shutter_close.timestamp, 0.5))
         writeTransform(view, timestamp, frame_id, output_bag)
+
         header.stamp = timestamp
 
         # Read RGB, Depth and Instance images for the current view.
@@ -319,7 +324,8 @@ def convert(scenenet_path, trajectory, to_frame, output_bag):
         if (write_object_segments):
             # Write all the instances in the current view as pointclouds.
             instances_in_current_frame = np.unique(instance_image)
-
+            # instance = 14
+            # if instance in instances_in_current_frame:
             for instance in instances_in_current_frame:
                 instance_mask = np.ma.masked_not_equal(instance_image,
                                                        instance).mask
