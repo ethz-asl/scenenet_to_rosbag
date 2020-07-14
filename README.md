@@ -19,17 +19,17 @@ Tools for working with the [SceneNet RGB-D](https://robotvault.bitbucket.io/scen
     mkdir data && cd data
 
     # Training set
-    wget http://www.doc.ic.ac.uk/~ahanda/train_protobufs.tar.gz train_protobufs.tar.gz
+    wget https://www.doc.ic.ac.uk/~bjm113/scenenet_data/train_protobufs.tar.gz train_protobufs.tar.gz
     tar -xvzf train_protobufs.tar.gz --strip=1
-    wget http://www.doc.ic.ac.uk/~ahanda/train_split/train_0.tar.gz train_0.tar.gz
+    wget https://www.doc.ic.ac.uk/~bjm113/scenenet_data/train_split/train_0.tar.gz train_0.tar.gz
     tar -xvzf train_0.tar.gz
-    wget http://www.doc.ic.ac.uk/~ahanda/train_split/train_1.tar.gz train_1.tar.gz
+    wget https://www.doc.ic.ac.uk/~bjm113/scenenet_data/train_split/train_1.tar.gz train_1.tar.gz
     tar -xvzf train_1.tar.gz
     ...
 
     # Validation set
-    wget http://www.doc.ic.ac.uk/~ahanda/scenenet_rgbd_val.pb scenenet_rgbd_val.pb
-    wget http://www.doc.ic.ac.uk/~ahanda/SceneNetRGBD-val.tar.gz SceneNetRGBD-val.tar.gz
+    wget http://www.doc.ic.ac.uk/~bjm113/scenenet_data/scenenet_rgbd_val.pb scenenet_rgbd_val.pb
+    wget http://www.doc.ic.ac.uk/~bjm113/scenenet_data/SceneNetRGBD-val.tar.gz SceneNetRGBD-val.tar.gz
     tar -xvzf SceneNetRGBD-val.tar.gz
 
     cd .. && make
